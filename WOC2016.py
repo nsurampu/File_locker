@@ -1,80 +1,145 @@
-#An application that can be used to lock pdf files and encrypt txt files
-#Text file encryption uses ARC4 encryption, which is stream encryption
-
 import os
 import PyPDF2
 from Crypto.Cipher import ARC4
+from Tkinter import *
+from tkMessageBox import *
 
-def pdfLock():
-    filename = raw_input("Enter file name with extension: ")
-    user_pass = raw_input("Enter password to be set: ")
-    owner_pass = user_pass
-    input_file = filename
-    output_file = "temp"
 
-    output = PyPDF2.PdfFileWriter()   
+def pdfLock(event):
+    try:
+        filename = fileEntry.get()
+        user_pass = passEntry.get()
+        owner_pass = user_pass
+        input_file = filename
+        output_file = "temp"
 
-    input_stream = PyPDF2.PdfFileReader(open(input_file, "rb"))
+        output = PyPDF2.PdfFileWriter()
 
-    for i in range(0, input_stream.getNumPages()):
-	output.addPage(inputstream.getPage(i))
+        input_stream = PyPDF2.PdfFileReader(open(input_file, "rb"))
 
-    outputStream = open(output_file, "wb")
+        for i in range(0, input_stream.getNumPages()):
+            output.addPage(inputstream.getPage(i))
 
-    output.encrypt(user_pass, owner_pass, use_128bit = True)
-    output.write(outputStream)
-    outputStream.close()
-    os.rename(output_file, input_file)
-    print "Lock applied successfully"
+            outputStream = open(output_file, "wb")
 
-def txtLock():
-    txtChoice = raw_input("Do you wish to encrypt or decrypt your file?: ")
-    txtChoice = txtChoice.lower()
+        output.encrypt(user_pass, owner_pass, use_128bit = True)
+        output.write(outputStream)
+        outputStream.close()
+        os.rename(output_file, input_file)
+        statusPop()
+        lockButton.unbind("<Button-1>")
+        lockButton.config(state = DISABLED)
+        passEntry.delete(0, END)
+    except Exception:
+        showerror("Error", "The file is either corrupt or missing.\nProcess aborted")
 
-    if txtChoice == "encrypt":
-	txtEncrypt()
-    elif txtChoice == "decrypt":
-	txtDecrypt()
-    else:
-	print("Invalid choice")
+def txtEncrypt(event):
+    try:
+        input_file = fileEntry.get()
+        key = keyEntry.get()
 
-def txtEncrypt():
-    input_file = raw_input("Enter name of text file to be encrypted with extension: ")
-    key = raw_input("Enter encryption key: ")
+        ifile = open(input_file, "r+")
+        plain = ifile.read()
+        ifile.close()
+        ofile = open(input_file, "w+")
+
+        obj = ARC4.new(key)
+        cipher = obj.encrypt(plain)
+        ofile.write(cipher)
+        ofile.close()
+        statusPop()
+        encryptButton.unbind("<Button-1>")
+        decryptButton.unbind("<Button-1>")
+        encryptButton.config(state = DISABLED)
+        decryptButton.config(state = DISABLED)
+        keyEntry.delete(0, END)
+    except Exception:
+        showerror("Error", "The file is either corrupt or missing\nProcess aborted")
+
+def txtDecrypt(event):
+    try:
+        efile = fileEntry.get()
+        key = keyEntry.get()
+
+        ifile = open(efile, "r+")
+        cipher = ifile.read()
+        ifile.close()
+        ofile = open(efile, "w+")
+
+        obj = ARC4.new(key)
+        plain = obj.decrypt(cipher)
+        ofile.write(plain)
+        ofile.close()
+        statusPop()
+        encryptButton.unbind("<Button-1>")
+        decryptButton.unbind("<Button-1>")
+        encryptButton.config(state = DISABLED)
+        decryptButton.config(state = DISABLED)
+        keyEntry.delete(0, END)
+    except Exception:
+        showerror("Error", "The file is either corrupt or missing\nProcess aborted")
+
+def enabler(event):
+    try:
+        text = fileEntry.get()
+        ext = text.split(".")[1]
+
+        if(ext == "pdf"):
+            lockButton.config(state = NORMAL)
+            lockButton.bind("<Button-1>", pdfLock)
+        elif(ext == "txt"):
+            encryptButton.config(state = NORMAL)
+            decryptButton.config(state = NORMAL)
+            encryptButton.bind("<Button-1>", txtEncrypt)
+            decryptButton.bind("<Button-1>", txtDecrypt)
+        else:
+            showwarning("Warning", "The file type is currently not supported.\nOnly pdf and txt files are allowed")
+    except Exception:
+        showerror("Error", "Invalid file name\nPlease enter a valid file name")
+
+def aboutPop():
+    showinfo("About", "Author : Naren Surampudi\nVersion : 2.0")
+
+def statusPop():
+    showinfo("Message", "Process completed successfully")
     
-    ifile = open(input_file, "r+")
-    plain = ifile.read()
-    ifile.close()
-    ofile = open(input_file, "w+")
 
-    obj = ARC4.new(key)
-    cipher = obj.encrypt(plain)
-    ofile.write(cipher)
-    ofile.close()
-    print "Encrypted successfully"
+root = Tk()
+root.geometry("420x400+0+0")
+root.wm_title("Secure Files")
 
-def txtDecrypt():
-    efile = raw_input("Enter name of text file to be decrypted with extension: ")
-    key = raw_input("Enter encryption key to decrypt: ")
+fileLabel = Label(text = "Enter file name here:")
+passLabel = Label(text = "Enter password to be set:")
+keyLabel = Label(text = "Enter encryption key:")
+okButton = Button(text = "OK")
+lockButton = Button(text = "Lock")
+encryptButton = Button(text = "Encrypt")
+decryptButton = Button(text = "Decrypt")
+fileEntry = Entry(root)
+passEntry = Entry(root)
+keyEntry = Entry(root)
+menu = Menu(root)
+root.config(menu = menu)
+filemenu = Menu(menu)
+menu.add_cascade(label = "File", menu = filemenu)
+filemenu.add_command(label = "About", command = aboutPop)
+filemenu.add_command(label = "Quit", command = root.quit)
 
-    ifile = open(efile, "r+")
-    cipher = ifile.read()
-    ifile.close()
-    ofile = open(efile, "w+")
+fileLabel.place(x = 50, y = 30)
+passLabel.place(x = 50, y = 140)
+fileEntry.place(x = 220, y = 30)
+passEntry.place(x = 220, y = 140)
+okButton.place(x = 175, y = 60)
+lockButton.place(x = 170, y = 170)
+keyLabel.place(x = 50, y = 250)
+keyEntry.place(x = 220, y = 250)
+encryptButton.place(x = 110, y = 280)
+decryptButton.place(x = 210, y = 280)
 
-    obj = ARC4.new(key)
-    plain = obj.decrypt(cipher)
-    ofile.write(plain)
-    ofile.close()
-    print "Decrypted successfully"
+lockButton.config(state = DISABLED)
+encryptButton.config(state = DISABLED)
+decryptButton.config(state = DISABLED)
 
+okButton.bind("<Button-1>", enabler)
 
-choice = raw_input("Which file type do you wish to secure- pdf or txt?: ")
-choice = choice.lower()
-
-if choice == "pdf":
-    pdfLock()
-elif choice == "txt":
-    txtLock()
-else:
-    print "The current file type is currently not suppported by the application"
+root.mainloop()
