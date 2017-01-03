@@ -1,8 +1,13 @@
+#An application to lock pdf files and encrypt txt files
+#This application has been written as a part of Winter Of Code 2016 of BITS Pilani-Hyderabad Campus
+#Author : Naren, Mentor : Nischay
+
 import os
 import PyPDF2
 from Crypto.Cipher import ARC4
 from Tkinter import *
 from tkMessageBox import *
+from tkFileDialog import *
 
 
 def pdfLock(event):
@@ -27,11 +32,10 @@ def pdfLock(event):
         outputStream.close()
         os.rename(output_file, input_file)
         statusPop()
-        lockButton.unbind("<Button-1>")
-        lockButton.config(state = DISABLED)
-        passEntry.delete(0, END)
+        disabler()
     except Exception:
         showerror("Error", "The file is either corrupt or missing.\nProcess aborted")
+        disabler()
 
 def txtEncrypt(event):
     try:
@@ -48,13 +52,10 @@ def txtEncrypt(event):
         ofile.write(cipher)
         ofile.close()
         statusPop()
-        encryptButton.unbind("<Button-1>")
-        decryptButton.unbind("<Button-1>")
-        encryptButton.config(state = DISABLED)
-        decryptButton.config(state = DISABLED)
-        keyEntry.delete(0, END)
+        disabler()
     except Exception:
         showerror("Error", "The file is either corrupt or missing\nProcess aborted")
+        disabler()
 
 def txtDecrypt(event):
     try:
@@ -71,13 +72,10 @@ def txtDecrypt(event):
         ofile.write(plain)
         ofile.close()
         statusPop()
-        encryptButton.unbind("<Button-1>")
-        decryptButton.unbind("<Button-1>")
-        encryptButton.config(state = DISABLED)
-        decryptButton.config(state = DISABLED)
-        keyEntry.delete(0, END)
+        disabler()
     except Exception:
         showerror("Error", "The file is either corrupt or missing\nProcess aborted")
+        disabler()
 
 def enabler(event):
     try:
@@ -97,11 +95,26 @@ def enabler(event):
     except Exception:
         showerror("Error", "Invalid file name\nPlease enter a valid file name")
 
+def disabler():
+    lockButton.config(state = DISABLED)
+    encryptButton.config(state = DISABLED)
+    decryptButton.config(state = DISABLED)
+    lockButton.unbind("<Button-1>")
+    encryptButton.unbind("<Button-1>")
+    decryptButton.unbind("<Button-1>")
+    passEntry.delete(0, END)
+    keyEntry.delete(0, END)
+
 def aboutPop():
     showinfo("About", "Author : Naren Surampudi\nVersion : 2.0")
 
 def statusPop():
     showinfo("Message", "Process completed successfully")
+
+def fileTray():
+    tray = askopenfilename(parent = root, title = "Choose file")
+    fileEntry.delete(0, END)
+    fileEntry.insert(0, tray)
     
 
 root = Tk()
@@ -122,8 +135,9 @@ menu = Menu(root)
 root.config(menu = menu)
 filemenu = Menu(menu)
 menu.add_cascade(label = "File", menu = filemenu)
-filemenu.add_command(label = "About", command = aboutPop)
-filemenu.add_command(label = "Quit", command = root.quit)
+filemenu.add_command(label = "  Open... ", command = fileTray)
+filemenu.add_command(label = "  About   ", command = aboutPop)
+filemenu.add_command(label = "  Quit    ", command = root.quit)
 
 fileLabel.place(x = 50, y = 30)
 passLabel.place(x = 50, y = 140)
