@@ -23,7 +23,7 @@ def pdfLock(event):
         input_stream = PyPDF2.PdfFileReader(open(input_file, "rb"))
 
         for i in range(0, input_stream.getNumPages()):
-            output.addPage(inputstream.getPage(i))
+            output.addPage(input_stream.getPage(i))
 
             outputStream = open(output_file, "wb")
 
