@@ -17,5 +17,4 @@ The PDF file remains locked unless the lock is removed.
 
 The text files are encrypted using a user entered key, that will have to be entered later to decrypt the text file.
 
-The files to be encrypted need to be in the same folder as the application, else the application will be unable to locate
-the file
+Windows users can now download the zip file and extract it to run the application. Python need not be installed for this.
