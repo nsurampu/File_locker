@@ -1,14 +1,19 @@
 #An application to lock pdf files and encrypt txt files
 #This application has been written as a part of Winter Of Code 2016 of BITS Pilani-Hyderabad Campus
-#Author : Naren, Mentor : Nischay
+#Author: Naren, Mentor: Nischay
 
 import os
+import base64
 import PyPDF2
-from Crypto.Cipher import ARC4
+from Crypto.Cipher import AES
+from Crypto import Random
 from Tkinter import *
 from tkMessageBox import *
 from tkFileDialog import *
 
+BS = 16
+pad = lambda s: s + (BS - len(s) % BS) * chr(BS - len(s) % BS)
+unpad = lambda s: s [:-ord(s[len(s) - 1:])]
 
 def pdfLock(event):
     try:
@@ -19,8 +24,9 @@ def pdfLock(event):
         output_file = "temp"
 
         output = PyPDF2.PdfFileWriter()
+        inputf = open(input_file, "rb")
 
-        input_stream = PyPDF2.PdfFileReader(open(input_file, "rb"))
+        input_stream = PyPDF2.PdfFileReader(inputf)
 
         for i in range(0, input_stream.getNumPages()):
             output.addPage(input_stream.getPage(i))
@@ -30,11 +36,13 @@ def pdfLock(event):
         output.encrypt(user_pass, owner_pass, use_128bit = True)
         output.write(outputStream)
         outputStream.close()
+        inputf.close()
+        os.remove(input_file)
         os.rename(output_file, input_file)
         statusPop()
         disabler()
-    except Exception:
-        showerror("Error", "The file is either corrupt or missing.\nProcess aborted")
+    except Exception as e:
+        showerror("Error", e)
         disabler()
 
 def txtEncrypt(event):
@@ -46,15 +54,16 @@ def txtEncrypt(event):
         plain = ifile.read()
         ifile.close()
         ofile = open(input_file, "w+")
-
-        obj = ARC4.new(key)
-        cipher = obj.encrypt(plain)
-        ofile.write(cipher)
+        plain = pad(plain)
+        IV = Random.new().read(AES.block_size)
+        cipher = AES.new(key, AES.MODE_CBC, IV)
+        encrypted = base64.b64encode(IV + cipher.encrypt(plain))
+        ofile.write(encrypted)
         ofile.close()
         statusPop()
         disabler()
-    except Exception:
-        showerror("Error", "The file is either corrupt or missing\nProcess aborted")
+    except Exception as e:
+        showerror("Error", e)
         disabler()
 
 def txtDecrypt(event):
@@ -63,18 +72,19 @@ def txtDecrypt(event):
         key = keyEntry.get()
 
         ifile = open(efile, "r+")
-        cipher = ifile.read()
+        enc  = ifile.read()
         ifile.close()
         ofile = open(efile, "w+")
-
-        obj = ARC4.new(key)
-        plain = obj.decrypt(cipher)
-        ofile.write(plain)
+        enc = base64.b64decode(enc)
+        IV = enc[:16]
+        cipher = AES.new(key, AES.MODE_CBC, IV)
+        decrypted = unpad(cipher.decrypt(enc[16:]))
+        ofile.write(decrypted)
         ofile.close()
         statusPop()
         disabler()
-    except Exception:
-        showerror("Error", "The file is either corrupt or missing\nProcess aborted")
+    except Exception as e:
+        showerror("Error", e)
         disabler()
 
 def enabler(event):
@@ -92,8 +102,8 @@ def enabler(event):
             decryptButton.bind("<Button-1>", txtDecrypt)
         else:
             showwarning("Warning", "The file type is currently not supported.\nOnly pdf and txt files are allowed")
-    except Exception:
-        showerror("Error", "Invalid file name\nPlease enter a valid file name")
+    except Exception as e:
+        showerror("Error", e)
 
 def disabler():
     lockButton.config(state = DISABLED)
@@ -106,7 +116,7 @@ def disabler():
     keyEntry.delete(0, END)
 
 def aboutPop():
-    showinfo("About", "Author : Naren Surampudi\nVersion : 2.0")
+    showinfo("About", "Author : Naren Surampudi\nVersion : 2.1")
 
 def statusPop():
     showinfo("Message", "Process completed successfully")
