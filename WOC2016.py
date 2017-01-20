@@ -9,7 +9,7 @@ from Crypto.Cipher import AES
 from Crypto import Random
 from Tkinter import *
 from tkMessageBox import *
- from tkFileDialog import *
+from tkFileDialog import *
 
 BS = 16
 pad = lambda s: s + (BS - len(s) % BS) * chr(BS - len(s) % BS)   #This will ensure that the text in the files are mutiples of 16
@@ -19,7 +19,7 @@ def pdfLock(event):   #This function takes care of locking the pdf files and set
     try:
         filename = fileEntry.get()
         user_pass = passEntry.get()
-         owner_pass = user_pass
+        owner_pass = user_pass
         input_file = filename
         output_file = "temp"   #Creating a temporary pdf file where all the contents of the original file will be copied to. This will be the one that will be locked
 
@@ -54,7 +54,7 @@ def txtEncrypt(event):   #This takes care of the txt files encryption
         plain = ifile.read()
         ifile.close()
         ofile = open(input_file, "w+")
-         plain = pad(plain)
+        plain = pad(plain)
         IV = Random.new().read(AES.block_size)   #Creating a random initialization vector
         cipher = AES.new(key, AES.MODE_CBC, IV)   #Creating the cipher for encrypting the text
         encrypted = base64.b64encode(IV + cipher.encrypt(plain))   #Encrypting the text
@@ -64,7 +64,7 @@ def txtEncrypt(event):   #This takes care of the txt files encryption
         disabler()
     except Exception as e:
         showerror("Error", e)
-         disabler()
+        disabler()
 
 def txtDecrypt(event):   #This takes care of the txt files decryption
     try:
